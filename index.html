@@ -8,54 +8,62 @@
         padding: 0;
       }
 
-      .div {
+      .video-container {
         width: 100vw;
         height: 100vh;
         display: flex;
         justify-content: center;
-        align-items: flex-start;
-      }
-      .video-container {
-        padding: 75% 0 0 0;
+        align-items: center;
         position: relative;
+      }
+
+      .video-container iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .video-container button {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1;
       }
     </style>
   </head>
   <body>
-    <div class="div">
-      <div class="video-container">
-        <iframe id="videoPlayer" width="560" height="315" src="https://player.vimeo.com/video/123456789?autoplay=0&loop=1&autopause=0" title="Vimeo video player" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
-      </div>
+    <div class="video-container">
+      <iframe width="560" height="315" src="https://www.youtube.com/embed/6ISYNFHejPw?controls=0&amp;start=8" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+      <button onclick="openFullscreen()">Tela cheia</button>
     </div>
 
-    <script src="https://rawgit.com/sitepoint-editors/jsqrcode/master/src/qr_packed.js"></script>
-    <script>
-      function onQRCodeScanned(scannedText) {
-        if (scannedText === "play") {
-          document.getElementById("videoPlayer").play();
-        } else if (scannedText === "pause") {
-          document.getElementById("videoPlayer").pause();
+    <script type="module">
+      import QrScanner from 'https://cdn.jsdelivr.net/npm/@zxing/library@0.24.0/esm/index.js';
+
+      const videoContainer = document.querySelector('.video-container');
+      const scanner = new QrScanner(videoContainer.querySelector('iframe'));
+
+      scanner.start();
+
+      scanner.onScan = (result) => {
+        if (result) {
+          videoContainer.querySelector('iframe').contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+        } else {
+          videoContainer.querySelector('iframe').contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+        }
+      };
+
+      function openFullscreen() {
+        if (videoContainer.requestFullscreen) {
+          videoContainer.requestFullscreen();
+        } else if (videoContainer.webkitRequestFullscreen) { /* Safari */
+          videoContainer.webkitRequestFullscreen();
+        } else if (videoContainer.msRequestFullscreen) { /* IE11 */
+          videoContainer.msRequestFullscreen();
         }
       }
-
-      function provideVideo() {
-        var n = navigator;
-
-        if (n.mediaDevices && n.mediaDevices.getUserMedia) {
-          return n.mediaDevices.getUserMedia({
-            video: {
-              facingMode: "environment"
-            },
-            audio: false
-          }).then(function(stream) {
-            qrcode.decodeFromStream(stream, onQRCodeScanned);
-          });
-        }
-
-        console.log("getUserMedia not supported");
-      }
-
-      provideVideo();
     </script>
   </body>
 </html>
