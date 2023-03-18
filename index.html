@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Exemplo de página web com vídeo e QR Code</title>
+    <title>Exemplo de página web com vídeo</title>
     <style>
       body {
         margin: 0;
@@ -19,70 +19,43 @@
         padding: 75% 0 0 0;
         position: relative;
       }
-
-      canvas {
-        position: absolute;
-        top: 0;
-        left: 0;
-      }
     </style>
   </head>
   <body>
     <div class="div">
       <div class="video-container">
-        <video id="video" width="560" height="315" src="https://www.youtube.com/embed/6ISYNFHejPw?controls=0&amp;start=8" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></video>
-        <button onclick="openFullscreen()">Tela cheia</button>
-        <canvas id="canvas"></canvas>
+        <iframe id="videoPlayer" width="560" height="315" src="https://player.vimeo.com/video/123456789?autoplay=0&loop=1&autopause=0" title="Vimeo video player" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
       </div>
     </div>
 
-    <script src="https://rawgit.com/cozmo/jsQR/master/dist/jsQR.js"></script>
+    <script src="https://rawgit.com/sitepoint-editors/jsqrcode/master/src/qr_packed.js"></script>
     <script>
-      const video = document.getElementById('video');
-      const canvas = document.getElementById('canvas');
-      const context = canvas.getContext('2d');
-      let requestId;
-
-      function openFullscreen() {
-        var elem = document.querySelector('video');
-        if (elem.requestFullscreen) {
-          elem.requestFullscreen();
-        } else if (elem.webkitRequestFullscreen) { /* Safari */
-          elem.webkitRequestFullscreen();
-        } else if (elem.msRequestFullscreen) { /* IE11 */
-          elem.msRequestFullscreen();
+      function onQRCodeScanned(scannedText) {
+        if (scannedText === "play") {
+          document.getElementById("videoPlayer").play();
+        } else if (scannedText === "pause") {
+          document.getElementById("videoPlayer").pause();
         }
       }
 
-      function startCapture() {
-        navigator.mediaDevices.getUserMedia({ video: true })
-          .then(stream => {
-            video.srcObject = stream;
-            video.play();
-            tick();
-          })
-          .catch(error => console.error(error));
-      }
+      function provideVideo() {
+        var n = navigator;
 
-      function tick() {
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-        const code = jsQR(imageData.data, imageData.width, imageData.height, {
-          inversionAttempts: 'dontInvert',
-        });
-
-        if (code) {
-          if (code.data === 'https://www.youtube.com/embed/6ISYNFHejPw?controls=0&start=8') {
-            video.play();
-          } else {
-            video.pause();
-          }
+        if (n.mediaDevices && n.mediaDevices.getUserMedia) {
+          return n.mediaDevices.getUserMedia({
+            video: {
+              facingMode: "environment"
+            },
+            audio: false
+          }).then(function(stream) {
+            qrcode.decodeFromStream(stream, onQRCodeScanned);
+          });
         }
 
-        requestId = requestAnimationFrame(tick);
+        console.log("getUserMedia not supported");
       }
 
-      startCapture();
+      provideVideo();
     </script>
   </body>
 </html>
