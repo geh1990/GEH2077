@@ -19,24 +19,25 @@
         padding: 75% 0 0 0;
         position: relative;
       }
+
+      /* oculta a câmera */
+      #myVideo {
+        display: none;
+      }
     </style>
   </head>
   <body>
     <div class="div">
       <div class="video-container">
-        <video id="myVideo" width="560" height="315">
-          <source
-            src="https://www.youtube.com/watch?v=6ISYNFHejPw&ab_channel=CESARMC"
-            type="video/mp4"
-          />
-        </video>
+        <video id="qr-video" width="560" height="315"></video>
         <button onclick="openFullscreen()">Tela cheia</button>
       </div>
     </div>
 
+    <script src="https://cdn.rawgit.com/LazarSoft/jsqrcode/master/src/qr_packed.js"></script>
     <script>
       function openFullscreen() {
-        var elem = document.getElementById("myVideo");
+        var elem = document.getElementById("qr-video");
         if (elem.requestFullscreen) {
           elem.requestFullscreen();
         } else if (elem.mozRequestFullScreen) {
@@ -61,15 +62,32 @@
         video.pause();
       }
 
-      var video = document.getElementById("myVideo");
+      var video = document.getElementById("qr-video");
       var lastScannedCode = null;
 
       function detectQRCode() {
-        try {
-          qrcode.decode();
-        } catch (e) {
-          setTimeout(detectQRCode, 500);
-        }
+        navigator.mediaDevices
+          .getUserMedia({ video: { facingMode: "environment" } })
+          .then(function (stream) {
+            video.srcObject = stream;
+            video.setAttribute("playsinline", true);
+            video.play();
+            setTimeout(() => {
+              var canvas = document.createElement("canvas");
+              var context = canvas.getContext("2d");
+              canvas.width = video.videoWidth;
+              canvas.height = video.videoHeight;
+              context.drawImage(video, 0, 0, canvas.width, canvas.height);
+              try {
+                qrcode.decode();
+              } catch (e) {
+                setTimeout(detectQRCode, 500);
+              }
+            }, 1000);
+          })
+          .catch(function (err) {
+            console.log("Error: " + err);
+          });
 
         qrcode.callback = function (data) {
           if (data !== lastScannedCode) {
