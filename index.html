@@ -8,36 +8,41 @@
         padding: 0;
       }
 
-      .div {
+      #video-container {
         width: 100vw;
-        height: 100vh;
+        height: 50vh;
         display: flex;
         justify-content: center;
-        align-items: flex-start;
-      }
-      .video-container {
-        padding: 75% 0 0 0;
-        position: relative;
+        align-items: center;
+        background-color: black;
       }
 
-      /* oculta a câmera */
-      #myVideo {
-        display: none;
+      #camera-container {
+        width: 100vw;
+        height: 50vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: grey;
       }
     </style>
   </head>
   <body>
-    <div class="div">
-      <div class="video-container">
-        <video id="qr-video" width="560" height="315"></video>
-        <button onclick="openFullscreen()">Tela cheia</button>
-      </div>
+    <div id="video-container">
+      <video id="myVideo" width="560" height="315">
+        <source
+          src="https://www.youtube.com/watch?v=6ISYNFHejPw&ab_channel=CESARMC"
+          type="video/mp4"
+        />
+      </video>
+      <button onclick="openFullscreen()">Tela cheia</button>
     </div>
 
-    <script src="https://cdn.rawgit.com/LazarSoft/jsqrcode/master/src/qr_packed.js"></script>
+    <div id="camera-container"></div>
+
     <script>
       function openFullscreen() {
-        var elem = document.getElementById("qr-video");
+        var elem = document.getElementById("myVideo");
         if (elem.requestFullscreen) {
           elem.requestFullscreen();
         } else if (elem.mozRequestFullScreen) {
@@ -62,22 +67,25 @@
         video.pause();
       }
 
-      var video = document.getElementById("qr-video");
+      var video = document.getElementById("myVideo");
       var lastScannedCode = null;
 
       function detectQRCode() {
         navigator.mediaDevices
           .getUserMedia({ video: { facingMode: "environment" } })
           .then(function (stream) {
-            video.srcObject = stream;
-            video.setAttribute("playsinline", true);
-            video.play();
+            var videoElement = document.createElement("video");
+            videoElement.srcObject = stream;
+            videoElement.setAttribute("playsinline", true);
+            videoElement.play();
+            var cameraContainer = document.getElementById("camera-container");
+            cameraContainer.appendChild(videoElement);
             setTimeout(() => {
               var canvas = document.createElement("canvas");
               var context = canvas.getContext("2d");
-              canvas.width = video.videoWidth;
-              canvas.height = video.videoHeight;
-              context.drawImage(video, 0, 0, canvas.width, canvas.height);
+              canvas.width = videoElement.videoWidth;
+              canvas.height = videoElement.videoHeight;
+              context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
               try {
                 qrcode.decode();
               } catch (e) {
