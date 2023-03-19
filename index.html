@@ -8,41 +8,43 @@
         padding: 0;
       }
 
-      #video-container {
+      .div {
         width: 100vw;
-        height: 50vh;
+        height: 100vh;
         display: flex;
         justify-content: center;
-        align-items: center;
-        background-color: black;
+        align-items: flex-start;
+        flex-direction: column;
       }
-
-      #camera-container {
-        width: 100vw;
-        height: 50vh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background-color: grey;
+      .video-container {
+        padding: 75% 0 0 0;
+        position: relative;
+      }
+      #video {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+      #canvas {
+        display: none;
       }
     </style>
   </head>
   <body>
-    <div id="video-container">
-      <video id="myVideo" width="560" height="315">
-        <source
-          src="https://www.youtube.com/watch?v=6ISYNFHejPw&ab_channel=CESARMC"
-          type="video/mp4"
-        />
-      </video>
-      <button onclick="openFullscreen()">Tela cheia</button>
+    <div class="div">
+      <div class="video-container">
+        <video id="video" src="https://www.youtube.com/watch?v=6ISYNFHejPw&ab_channel=CESARMC"></video>
+      </div>
+      <canvas id="canvas"></canvas>
     </div>
 
-    <div id="camera-container"></div>
-
+    <script src="https://rawgit.com/sitepoint-editors/jsqrcode/master/src/qr_packed.js"></script>
     <script>
       function openFullscreen() {
-        var elem = document.getElementById("myVideo");
+        var elem = document.getElementById("video");
         if (elem.requestFullscreen) {
           elem.requestFullscreen();
         } else if (elem.mozRequestFullScreen) {
@@ -58,44 +60,36 @@
       }
 
       function playVideo() {
-        var video = document.getElementById("myVideo");
+        var video = document.getElementById("video");
         video.play();
       }
 
       function pauseVideo() {
-        var video = document.getElementById("myVideo");
+        var video = document.getElementById("video");
         video.pause();
       }
 
-      var video = document.getElementById("myVideo");
+      var video = document.getElementById("video");
       var lastScannedCode = null;
+      var isDetectingQRCode = false;
 
       function detectQRCode() {
-        navigator.mediaDevices
-          .getUserMedia({ video: { facingMode: "environment" } })
-          .then(function (stream) {
-            var videoElement = document.createElement("video");
-            videoElement.srcObject = stream;
-            videoElement.setAttribute("playsinline", true);
-            videoElement.play();
-            var cameraContainer = document.getElementById("camera-container");
-            cameraContainer.appendChild(videoElement);
-            setTimeout(() => {
-              var canvas = document.createElement("canvas");
-              var context = canvas.getContext("2d");
-              canvas.width = videoElement.videoWidth;
-              canvas.height = videoElement.videoHeight;
-              context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-              try {
-                qrcode.decode();
-              } catch (e) {
-                setTimeout(detectQRCode, 500);
-              }
-            }, 1000);
-          })
-          .catch(function (err) {
-            console.log("Error: " + err);
-          });
+        if (isDetectingQRCode) {
+          return;
+        }
+        isDetectingQRCode = true;
+        var canvas = document.getElementById("canvas");
+        var context = canvas.getContext("2d");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        try {
+          qrcode.decode();
+        } catch (e) {
+          setTimeout(detectQRCode, 500);
+          isDetectingQRCode = false;
+          return;
+        }
 
         qrcode.callback = function (data) {
           if (data !== lastScannedCode) {
@@ -108,11 +102,6 @@
               pauseVideo();
             }
           }
-          setTimeout(detectQRCode, 500);
+          isDetectingQRCode = false;
         };
-      }
-
-      detectQRCode();
-    </script>
-  </body>
-</html>
+     
