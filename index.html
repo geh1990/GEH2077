@@ -24,60 +24,86 @@
   <body>
     <div class="div">
       <div class="video-container">
-        <iframe id="video" width="560" height="315" src="https://www.youtube.com/embed/6ISYNFHejPw?controls=0&amp;start=8" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+        <video id="myVideo" width="560" height="315">
+          <source
+            src="https://www.youtube.com/watch?v=6ISYNFHejPw&ab_channel=CESARMC"
+            type="video/mp4"
+          />
+        </video>
         <button onclick="openFullscreen()">Tela cheia</button>
       </div>
     </div>
 
-    <script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
     <script>
-      let scanner = new Instascan.Scanner({ video: document.getElementById("preview") });
-      scanner.addListener("scan", function (content) {
-        if (content === "https://www.example.com/video") {
-          let video = document.getElementById("video");
-          video.play();
-        }
-      });
-      Instascan.Camera.getCameras()
-        .then(function (cameras) {
-          if (cameras.length > 0) {
-            scanner.start(cameras[0]);
-          } else {
-            console.error("Nenhuma câmera encontrada.");
-          }
-        })
-        .catch(function (e) {
-          console.error(e);
-        });
       function openFullscreen() {
-        let elem = document.getElementById("video");
+        var elem = document.getElementById("myVideo");
         if (elem.requestFullscreen) {
           elem.requestFullscreen();
         } else if (elem.mozRequestFullScreen) {
+          /* Firefox */
           elem.mozRequestFullScreen();
         } else if (elem.webkitRequestFullscreen) {
+          /* Chrome, Safari and Opera */
           elem.webkitRequestFullscreen();
         } else if (elem.msRequestFullscreen) {
+          /* IE/Edge */
           elem.msRequestFullscreen();
         }
       }
-      let video = document.getElementById("video");
-      video.muted = true;
-      video.addEventListener("click", function () {
-        if (video.paused) {
-          video.play();
-        } else {
-          video.pause();
-        }
-      });
-      document.addEventListener("visibilitychange", function () {
-        if (document.visibilityState === "hidden") {
-          video.pause();
-        } else {
-          video.play();
-        }
-      });
-      video.play();
+
+      function playVideo() {
+        var video = document.getElementById("myVideo");
+        video.play();
+      }
+
+      function pauseVideo() {
+        var video = document.getElementById("myVideo");
+        video.pause();
+      }
+
+      var video = document.getElementById("myVideo");
+      var lastScannedCode = null;
+
+      function detectQRCode() {
+        navigator.mediaDevices
+          .getUserMedia({ video: { facingMode: "environment" } })
+          .then(function (stream) {
+            video.srcObject = stream;
+            video.setAttribute("playsinline", true);
+            video.play();
+            setTimeout(() => {
+              var canvas = document.createElement("canvas");
+              var context = canvas.getContext("2d");
+              canvas.width = video.videoWidth;
+              canvas.height = video.videoHeight;
+              context.drawImage(video, 0, 0, canvas.width, canvas.height);
+              try {
+                qrcode.decode();
+              } catch (e) {
+                setTimeout(detectQRCode, 500);
+              }
+            }, 1000);
+          })
+          .catch(function (err) {
+            console.log("Error: " + err);
+          });
+
+        qrcode.callback = function (data) {
+          if (data !== lastScannedCode) {
+            lastScannedCode = data;
+            if (data) {
+              console.log("QR Code detected: " + data);
+              playVideo();
+            } else {
+              console.log("QR Code removed from camera view");
+              pauseVideo();
+            }
+          }
+          setTimeout(detectQRCode, 500);
+        };
+      }
+
+      detectQRCode();
     </script>
   </body>
 </html>
