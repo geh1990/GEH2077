@@ -25,6 +25,10 @@
     <div class="div">
       <div class="video-container">
         <video id="myVideo" width="560" height="315">
+          <source
+            src="https://www.youtube.com/watch?v=6ISYNFHejPw&ab_channel=CESARMC"
+            type="video/mp4"
+          />
         </video>
         <button onclick="openFullscreen()">Tela cheia</button>
       </div>
@@ -47,42 +51,35 @@
         }
       }
 
+      function playVideo() {
+        var video = document.getElementById("myVideo");
+        video.play();
+      }
+
+      function pauseVideo() {
+        var video = document.getElementById("myVideo");
+        video.pause();
+      }
+
       var video = document.getElementById("myVideo");
       var lastScannedCode = null;
 
       function detectQRCode() {
-        navigator.mediaDevices
-          .getUserMedia({ video: { facingMode: "environment" } })
-          .then(function (stream) {
-            video.srcObject = stream;
-            video.setAttribute("playsinline", true);
-            video.play();
-            setTimeout(() => {
-              var canvas = document.createElement("canvas");
-              var context = canvas.getContext("2d");
-              canvas.width = video.videoWidth;
-              canvas.height = video.videoHeight;
-              context.drawImage(video, 0, 0, canvas.width, canvas.height);
-              try {
-                qrcode.decode();
-              } catch (e) {
-                setTimeout(detectQRCode, 500);
-              }
-            }, 1000);
-          })
-          .catch(function (err) {
-            console.log("Error: " + err);
-          });
+        try {
+          qrcode.decode();
+        } catch (e) {
+          setTimeout(detectQRCode, 500);
+        }
 
         qrcode.callback = function (data) {
           if (data !== lastScannedCode) {
             lastScannedCode = data;
             if (data) {
               console.log("QR Code detected: " + data);
-              video.src = "https://www.youtube.com/embed/6ISYNFHejPw?autoplay=1&modestbranding=1&rel=0";
+              playVideo();
             } else {
               console.log("QR Code removed from camera view");
-              video.pause();
+              pauseVideo();
             }
           }
           setTimeout(detectQRCode, 500);
