@@ -8,62 +8,76 @@
         padding: 0;
       }
 
-      .video-container {
+      .div {
         width: 100vw;
         height: 100vh;
         display: flex;
         justify-content: center;
-        align-items: center;
+        align-items: flex-start;
+      }
+      .video-container {
+        padding: 75% 0 0 0;
         position: relative;
-      }
-
-      .video-container iframe {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-      }
-
-      .video-container button {
-        position: absolute;
-        bottom: 20px;
-        right: 20px;
-        z-index: 1;
       }
     </style>
   </head>
   <body>
-    <div class="video-container">
-      <iframe width="560" height="315" src="https://www.youtube.com/embed/6ISYNFHejPw?controls=0&amp;start=8" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
-      <button onclick="openFullscreen()">Tela cheia</button>
+    <div class="div">
+      <div class="video-container">
+        <iframe id="video" width="560" height="315" src="https://www.youtube.com/embed/6ISYNFHejPw?controls=0&amp;start=8" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+        <button onclick="openFullscreen()">Tela cheia</button>
+      </div>
     </div>
 
-    <script type="module">
-      import QrScanner from 'https://cdn.jsdelivr.net/npm/@zxing/library@0.24.0/esm/index.js';
-
-      const videoContainer = document.querySelector('.video-container');
-      const scanner = new QrScanner(videoContainer.querySelector('iframe'));
-
-      scanner.start();
-
-      scanner.onScan = (result) => {
-        if (result) {
-          videoContainer.querySelector('iframe').contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
-        } else {
-          videoContainer.querySelector('iframe').contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+    <script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
+    <script>
+      let scanner = new Instascan.Scanner({ video: document.getElementById("preview") });
+      scanner.addListener("scan", function (content) {
+        if (content === "https://www.example.com/video") {
+          let video = document.getElementById("video");
+          video.play();
         }
-      };
-
+      });
+      Instascan.Camera.getCameras()
+        .then(function (cameras) {
+          if (cameras.length > 0) {
+            scanner.start(cameras[0]);
+          } else {
+            console.error("Nenhuma câmera encontrada.");
+          }
+        })
+        .catch(function (e) {
+          console.error(e);
+        });
       function openFullscreen() {
-        if (videoContainer.requestFullscreen) {
-          videoContainer.requestFullscreen();
-        } else if (videoContainer.webkitRequestFullscreen) { /* Safari */
-          videoContainer.webkitRequestFullscreen();
-        } else if (videoContainer.msRequestFullscreen) { /* IE11 */
-          videoContainer.msRequestFullscreen();
+        let elem = document.getElementById("video");
+        if (elem.requestFullscreen) {
+          elem.requestFullscreen();
+        } else if (elem.mozRequestFullScreen) {
+          elem.mozRequestFullScreen();
+        } else if (elem.webkitRequestFullscreen) {
+          elem.webkitRequestFullscreen();
+        } else if (elem.msRequestFullscreen) {
+          elem.msRequestFullscreen();
         }
       }
+      let video = document.getElementById("video");
+      video.muted = true;
+      video.addEventListener("click", function () {
+        if (video.paused) {
+          video.play();
+        } else {
+          video.pause();
+        }
+      });
+      document.addEventListener("visibilitychange", function () {
+        if (document.visibilityState === "hidden") {
+          video.pause();
+        } else {
+          video.play();
+        }
+      });
+      video.play();
     </script>
   </body>
 </html>
