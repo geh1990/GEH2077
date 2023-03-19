@@ -7,11 +7,11 @@
   <body>
     <div>
       <h1>Meu vídeo</h1>
-      <iframe width="560" height="315" src="https://www.youtube.com/embed/6ISYNFHejPw" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+      <iframe id="youtube" width="560" height="315" src="https://www.youtube.com/embed/6ISYNFHejPw?autoplay=1&mute=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
     </div>
     <div>
       <h1>Minha câmera</h1>
-      <video id="video" width="560" height="315"></video>
+      <video id="video" width="560" height="315" autoplay playsinline></video>
     </div>
     <script>
       const constraints = { video: true };
@@ -27,6 +27,12 @@
       }
 
       init();
+
+      // Pausa o vídeo do YouTube após 5 segundos
+      setTimeout(function() {
+        const youtubeVideo = document.getElementById('youtube');
+        youtubeVideo.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+      }, 5000);
     </script>
   </body>
 </html>
