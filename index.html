@@ -1,104 +1,32 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Exemplo de página web com vídeo</title>
-    <style>
-      body {
-        margin: 0;
-        padding: 0;
-      }
-
-      .div {
-        width: 100vw;
-        height: 50vh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
-
-      .video-container {
-        width: 100%;
-        height: 100%;
-        position: relative;
-      }
-
-      video {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
-
-      #qr-canvas {
-        position: absolute;
-        top: 0;
-        left: 0;
-        height: 100%;
-        width: 100%;
-        z-index: 1;
-        display: none;
-      }
-    </style>
+    <meta charset="UTF-8">
+    <title>Exemplo</title>
   </head>
   <body>
-    <div class="div">
-      <div class="video-container">
-        <video id="myVideo" autoplay muted loop>
-          <source
-            src="https://youtu.be/6ISYNFHejPw"
-            type="video/mp4"
-          />
-        </video>
-      </div>
+    <div>
+      <h1>Meu vídeo</h1>
+      <iframe width="560" height="315" src="https://www.youtube.com/embed/6ISYNFHejPw" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
     </div>
-
-    <canvas id="qr-canvas"></canvas>
-
-    <script src="https://rawgit.com/sitepoint-editors/jsqrcode/master/src/qr_packed.js"></script>
+    <div>
+      <h1>Minha câmera</h1>
+      <video id="video" width="560" height="315"></video>
+    </div>
     <script>
-      var video = document.getElementById("myVideo");
-      var lastScannedCode = null;
-      var canvas = document.getElementById("qr-canvas");
-      var context = canvas.getContext("2d");
-      var stopStream = function (stream) {
-        stream.getTracks().forEach(function (track) {
-          track.stop();
-        });
-      };
+      const constraints = { video: true };
 
-      function detectQRCode() {
-        navigator.mediaDevices
-          .getUserMedia({ video: { facingMode: "environment" } })
-          .then(function (stream) {
-            video.srcObject = stream;
-            video.setAttribute("playsinline", true);
-            video.play();
-            setTimeout(() => {
-              canvas.width = video.videoWidth;
-              canvas.height = video.videoHeight;
-              context.drawImage(video, 0, 0, canvas.width, canvas.height);
-              try {
-                qrcode.decode();
-              } catch (e) {
-                setTimeout(detectQRCode, 500);
-              }
-            }, 1000);
-          })
-          .catch(function (err) {
-            console.log("Error: " + err);
-          });
-
-        qrcode.callback = function (data) {
-          if (data !== lastScannedCode) {
-            lastScannedCode = data;
-            if (data) {
-              console.log("QR Code detected: " + data);
-            }
-          }
-          setTimeout(detectQRCode, 500);
-        };
+      async function init() {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia(constraints);
+          const videoElement = document.getElementById('video');
+          videoElement.srcObject = stream;
+        } catch (error) {
+          console.error('Falha ao acessar câmera.', error);
+        }
       }
 
-      detectQRCode();
+      init();
     </script>
   </body>
 </html>
